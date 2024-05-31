@@ -2,13 +2,37 @@ import os
 import pandas as pd
 import numpy as np
 import streamlit as st
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import classification_report, accuracy_score
-from sklearn.model_selection import train_test_split
-from joblib import dump, load
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from xgboost import XGBClassifier
+from sklearn.metrics import accuracy_score, classification_report
 
-st.title("Anomaly Detection Predictive Model")
+# Define a function to create pipelines
+def create_pipeline(model):
+    return Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', model)
+    ])
+
+# Define models and hyperparameters grid
+models = {
+    'Logistic Regression': (LogisticRegression(), {'classifier__C': [0.001, 0.01, 0.1, 1, 10, 100], 'classifier__penalty': ['l1', 'l2']}),
+    'Decision Tree': (DecisionTreeClassifier(), {'classifier__max_depth': [None, 5, 10, 15, 20], 'classifier__min_samples_split': [2, 5, 10], 'classifier__min_samples_leaf': [1, 2, 4]}),
+    'Random Forest': (RandomForestClassifier(), {'classifier__n_estimators': [100, 200, 300], 'classifier__max_depth': [None, 5, 10, 15], 'classifier__min_samples_split': [2, 5, 10], 'classifier__min_samples_leaf': [1, 2, 4]}),
+    'SVM': (SVC(), {'classifier__C': [0.1, 1, 10], 'classifier__kernel': ['linear', 'rbf']}),
+    'KNN': (KNeighborsClassifier(), {'classifier__n_neighbors': [3, 5, 7, 9], 'classifier__weights': ['uniform', 'distance'], 'classifier__metric': ['euclidean', 'manhattan']}),
+    'Gradient Boosting': (GradientBoostingClassifier(), {'classifier__n_estimators': [100, 200, 300], 'classifier__learning_rate': [0.1, 0.01, 0.001], 'classifier__max_depth': [3, 5, 7]}),
+    'XGBoost': (XGBClassifier(eval_metric='logloss'), {'classifier__n_estimators': [100, 200, 300], 'classifier__learning_rate': [0.1, 0.01, 0.001], 'classifier__max_depth': [3, 5, 7]})
+}
+
+# Streamlit interface
+st.title("Machine Learning Model Tuning")
 
 # Upload scored data CSV
 st.header("Upload Scored Data CSV")
@@ -16,64 +40,51 @@ uploaded_file = st.file_uploader("Upload your input CSV file", type=["csv"])
 
 if uploaded_file is not None:
     # Load the scored data
-    scored_data = pd.read_csv(uploaded_file)
-
-    st.subheader("Data Preview")
-    st.write(scored_data.head())
-
+    data = pd.read_csv(uploaded_file)
+    
+    # Convert Anomaly_Label from -1 and 1 to 0 and 1
+    data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
+    
     # Separate features and target
-    X = scored_data.drop(columns=['Anomaly_Label'])
-    y = scored_data['Anomaly_Label']
-
-    # Preprocess the data
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    # Train-test split
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
-
-    # Check if the model file exists
-    model_path = 'models/best_model.pkl'
-    if not os.path.exists('models'):
-        os.makedirs('models')
+    X = data.drop(columns=['Anomaly_Label'])
+    y = data['Anomaly_Label']
+    
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    
+    # Select model
+    model_name = st.selectbox('Select Model', list(models.keys()))
+    
+    if model_name:
+        model, param_grid = models[model_name]
+        pipeline = create_pipeline(model)
         
-    if os.path.exists(model_path):
-        # Load the trained model
-        model = load(model_path)
-    else:
-        # Train a new model
-        model = GradientBoostingClassifier(random_state=42)
-        model.fit(X_train, y_train)
+        # Perform hyperparameter tuning
+        grid_search = GridSearchCV(pipeline, param_grid, cv=5, n_jobs=-1)
+        grid_search.fit(X_train, y_train)
+        best_model = grid_search.best_estimator_
+        y_pred = best_model.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        report = classification_report(y_test, y_pred, output_dict=True)
         
-        # Save the model
-        dump(model, model_path)
-        st.success(f"Model trained and saved to {model_path}")
-
-    # Predict on the test set
-    y_pred = model.predict(X_test)
-
-    # Display accuracy
-    accuracy = accuracy_score(y_test, y_pred)
-    st.subheader(f"Model Accuracy: {accuracy:.2f}")
-
-    # Display classification report
-    report = classification_report(y_test, y_pred, output_dict=True)
-    st.write(pd.DataFrame(report).transpose())
-
-    # Scoring the entire dataset
-    y_pred_full = model.predict(X_scaled)
-    scored_data['Predicted_Label'] = y_pred_full
-
-    st.subheader("Scored Data with Predictions")
-    st.write(scored_data)
-
-    # Download the scored data with predictions
-    scored_data_csv = scored_data.to_csv(index=False)
-    st.download_button(
-        label="Download Scored Data as CSV",
-        data=scored_data_csv,
-        file_name='scored_data_with_predictions.csv',
-        mime='text/csv'
-    )
+        # Display results
+        st.subheader(f"Best hyperparameters for {model_name}")
+        st.write(grid_search.best_params_)
+        st.subheader(f"{model_name} Tuned Accuracy")
+        st.write(f"{accuracy:.2f}")
+        st.subheader(f"Classification Report for {model_name}")
+        st.write(pd.DataFrame(report).transpose())
+        
+        # Store the results for download
+        result_data = data.copy()
+        result_data['Predicted_Label'] = best_model.predict(X)
+        result_csv = result_data.to_csv(index=False)
+        
+        st.download_button(
+            label="Download Scored Data with Predictions as CSV",
+            data=result_csv,
+            file_name='scored_data_with_predictions.csv',
+            mime='text/csv'
+        )
 else:
     st.info("Please upload a CSV file to proceed.")
