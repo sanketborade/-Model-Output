@@ -32,7 +32,7 @@ models = {
 }
 
 # Streamlit interface
-st.title("Machine Learning Model Tuning")
+st.title("Predictive Model")
 
 # Upload scored data CSV
 st.header("Upload Scored Data CSV")
