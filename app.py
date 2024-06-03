@@ -78,6 +78,10 @@ if uploaded_file is not None:
         # Store the results for download
         result_data = data.copy()
         result_data['Predicted_Label'] = best_model.predict(X)
+        
+        st.subheader("Scored Data with Predictions")
+        st.write(result_data.head())
+
         result_csv = result_data.to_csv(index=False)
         
         st.download_button(
