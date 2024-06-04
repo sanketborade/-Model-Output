@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import streamlit as st
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -20,15 +20,15 @@ def create_pipeline(model):
         ('classifier', model)
     ])
 
-# Define models and hyperparameters grid
+# Define models with tuned hyperparameters
 models = {
-    'Logistic Regression': (LogisticRegression(), {'classifier__C': [0.001, 0.01, 0.1, 1, 10, 100], 'classifier__penalty': ['l1', 'l2']}),
-    'Decision Tree': (DecisionTreeClassifier(), {'classifier__max_depth': [None, 5, 10, 15, 20], 'classifier__min_samples_split': [2, 5, 10], 'classifier__min_samples_leaf': [1, 2, 4]}),
-    'Random Forest': (RandomForestClassifier(), {'classifier__n_estimators': [100, 200, 300], 'classifier__max_depth': [None, 5, 10, 15], 'classifier__min_samples_split': [2, 5, 10], 'classifier__min_samples_leaf': [1, 2, 4]}),
-    'SVM': (SVC(), {'classifier__C': [0.1, 1, 10], 'classifier__kernel': ['linear', 'rbf']}),
-    'KNN': (KNeighborsClassifier(), {'classifier__n_neighbors': [3, 5, 7, 9], 'classifier__weights': ['uniform', 'distance'], 'classifier__metric': ['euclidean', 'manhattan']}),
-    'Gradient Boosting': (GradientBoostingClassifier(), {'classifier__n_estimators': [100, 200, 300], 'classifier__learning_rate': [0.1, 0.01, 0.001], 'classifier__max_depth': [3, 5, 7]}),
-    'XGBoost': (XGBClassifier(eval_metric='logloss'), {'classifier__n_estimators': [100, 200, 300], 'classifier__learning_rate': [0.1, 0.01, 0.001], 'classifier__max_depth': [3, 5, 7]})
+    'Logistic Regression': LogisticRegression(C=100, penalty='l2'),
+    'Decision Tree': DecisionTreeClassifier(max_depth='None', min_samples_split=2, min_samples_leaf=1),
+    'Random Forest': RandomForestClassifier(n_estimators=300, max_depth='None', min_samples_split=2, min_samples_leaf=1),
+    'SVM': SVC(C=10, kernel='linear'),
+    'KNN': KNeighborsClassifier(n_neighbors=9, weights='distance', metric='manhattan'),
+    'Gradient Boosting': GradientBoostingClassifier(n_estimators=100, learning_rate=100, max_depth=3),
+    'XGBoost': XGBClassifier(eval_metric='logloss', n_estimators=300, learning_rate=0.01, max_depth=3)
 }
 
 # Streamlit interface
@@ -56,28 +56,24 @@ if uploaded_file is not None:
     model_name = st.selectbox('Select Model', list(models.keys()))
     
     if model_name:
-        model, param_grid = models[model_name]
+        model = models[model_name]
         pipeline = create_pipeline(model)
         
-        # Perform hyperparameter tuning
-        grid_search = GridSearchCV(pipeline, param_grid, cv=5, n_jobs=-1)
-        grid_search.fit(X_train, y_train)
-        best_model = grid_search.best_estimator_
-        y_pred = best_model.predict(X_test)
+        # Train the model
+        pipeline.fit(X_train, y_train)
+        y_pred = pipeline.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
         report = classification_report(y_test, y_pred, output_dict=True)
         
         # Display results
-        st.subheader(f"Best hyperparameters for {model_name}")
-        st.write(grid_search.best_params_)
-        st.subheader(f"{model_name} Tuned Accuracy")
+        st.subheader(f"{model_name} Accuracy")
         st.write(f"{accuracy:.2f}")
         st.subheader(f"Classification Report for {model_name}")
         st.write(pd.DataFrame(report).transpose())
         
         # Store the results for download
         result_data = data.copy()
-        result_data['Predicted_Label'] = best_model.predict(X)
+        result_data['Predicted_Label'] = pipeline.predict(X)
         
         st.subheader("Scored Data with Predictions")
         st.write(result_data.head())
