@@ -23,8 +23,8 @@ def create_pipeline(model):
 # Define models with tuned hyperparameters
 models = {
     'Logistic Regression': LogisticRegression(C=100, penalty='l2'),
-    'Decision Tree': DecisionTreeClassifier(max_depth='None', min_samples_split=2, min_samples_leaf=1),
-    'Random Forest': RandomForestClassifier(n_estimators=300, max_depth='None', min_samples_split=2, min_samples_leaf=1),
+    'Decision Tree': DecisionTreeClassifier(max_depth=None, min_samples_split=2, min_samples_leaf=1),
+    'Random Forest': RandomForestClassifier(n_estimators=300, max_depth=None, min_samples_split=2, min_samples_leaf=1),
     'SVM': SVC(C=10, kernel='linear'),
     'KNN': KNeighborsClassifier(n_neighbors=9, weights='distance', metric='manhattan'),
     'Gradient Boosting': GradientBoostingClassifier(n_estimators=100, learning_rate=100, max_depth=3),
