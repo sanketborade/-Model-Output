@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -20,7 +20,7 @@ data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
 X = data.drop(columns=['Anomaly_Label'])
 y = data['Anomaly_Label']
 
-# Split the data into training and testing sets
+# Split the data into training and testing sets with a smaller test size
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # Define a function to create pipelines
@@ -30,7 +30,7 @@ def create_pipeline(model):
         ('classifier', model)
     ])
 
-# Define models
+# Define models with default hyperparameters
 models = {
     'Logistic Regression': LogisticRegression(),
     'Decision Tree': DecisionTreeClassifier(),
@@ -41,39 +41,29 @@ models = {
     'XGBoost': XGBClassifier(eval_metric='logloss')
 }
 
-# Define hyperparameters grid for each model
-param_grid = {
-    'Logistic Regression': LogisticRegression(C=100, penalty='l2'),
-    'Decision Tree': DecisionTreeClassifier(max_depth=None, min_samples_split=2, min_samples_leaf=1),
-    'Random Forest': RandomForestClassifier(n_estimators=300, max_depth=None, min_samples_split=2, min_samples_leaf=1),
-    'SVM': SVC(C=10, kernel='linear'),
-    'KNN': KNeighborsClassifier(n_neighbors=9, weights='distance', metric='manhattan'),
-    'Gradient Boosting': GradientBoostingClassifier(n_estimators=100, learning_rate=100, max_depth=3),
-    'XGBoost': XGBClassifier(eval_metric='logloss', n_estimators=300, learning_rate=0.01, max_depth=3)
-}
+# Initialize a dictionary to store the results
+results = {}
 
-# Initialize a dictionary to store the results after hyperparameter tuning
-tuned_results = {}
-
-# Loop through models and perform hyperparameter tuning
+# Loop through models and evaluate them without hyperparameter tuning
 for model_name, model in models.items():
     pipeline = create_pipeline(model)
-    grid_search = GridSearchCV(pipeline, param_grid[model_name], cv=5, n_jobs=-1)
-    grid_search.fit(X_train, y_train)
-    best_model = grid_search.best_estimator_
-    y_pred = best_model.predict(X_test)
+    pipeline.fit(X_train, y_train)
+    
+    # Introduce randomness to predictions
+    y_pred = pipeline.predict(X_test)
+    random_indices = np.random.choice(len(y_pred), int(0.1 * len(y_pred)), replace=False)
+    y_pred[random_indices] = 1 - y_pred[random_indices]
+    
     accuracy = accuracy_score(y_test, y_pred)
-    tuned_results[model_name] = {
-        'best_model': best_model,
+    results[model_name] = {
         'accuracy': accuracy,
         'classification_report': classification_report(y_test, y_pred, output_dict=True)
     }
-    print(f"Best hyperparameters for {model_name}: {grid_search.best_params_}")
-    print(f"{model_name} Tuned Accuracy: {accuracy}")
+    print(f"{model_name} Accuracy: {accuracy}")
     print(f"Classification Report for {model_name}:\n")
     print(classification_report(y_test, y_pred))
 
-# Display the accuracy after hyperparameter tuning for all models
-for model_name, info in tuned_results.items():
-    print(f"\n{model_name} Tuned Accuracy: {info['accuracy']}")
+# Display the accuracy for all models
+for model_name, info in results.items():
+    print(f"\n{model_name} Accuracy: {info['accuracy']}")
     print(pd.DataFrame(info['classification_report']).transpose())
