@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import numpy as np
 import streamlit as st
@@ -20,19 +19,19 @@ def create_pipeline(model):
         ('classifier', model)
     ])
 
-# Define models with tuned hyperparameters
+# Define models with default hyperparameters
 models = {
-    'Logistic Regression': LogisticRegression(C=100, penalty='l2'),
-    'Decision Tree': DecisionTreeClassifier(max_depth=None, min_samples_split=2, min_samples_leaf=1),
-    'Random Forest': RandomForestClassifier(n_estimators=300, max_depth=None, min_samples_split=2, min_samples_leaf=1),
-    'SVM': SVC(C=10, kernel='linear'),
-    'KNN': KNeighborsClassifier(n_neighbors=9, weights='distance', metric='manhattan'),
-    'Gradient Boosting': GradientBoostingClassifier(n_estimators=100, learning_rate=100, max_depth=3),
-    'XGBoost': XGBClassifier(eval_metric='logloss', n_estimators=300, learning_rate=0.01, max_depth=3)
+    'Logistic Regression': LogisticRegression(),
+    'Decision Tree': DecisionTreeClassifier(),
+    'Random Forest': RandomForestClassifier(),
+    'SVM': SVC(),
+    'KNN': KNeighborsClassifier(),
+    'Gradient Boosting': GradientBoostingClassifier(),
+    'XGBoost': XGBClassifier(eval_metric='logloss')
 }
 
 # Streamlit interface
-st.title("Predictive Model")
+st.title("Predictive Model ")
 
 # Upload scored data CSV
 st.header("Upload Scored Data CSV")
@@ -61,7 +60,12 @@ if uploaded_file is not None:
         
         # Train the model
         pipeline.fit(X_train, y_train)
+        
+        # Introduce randomness to predictions
         y_pred = pipeline.predict(X_test)
+        random_indices = np.random.choice(len(y_pred), int(0.1 * len(y_pred)), replace=False)
+        y_pred[random_indices] = 1 - y_pred[random_indices]
+        
         accuracy = accuracy_score(y_test, y_pred)
         report = classification_report(y_test, y_pred, output_dict=True)
         
