@@ -31,7 +31,7 @@ models = {
 }
 
 # Streamlit interface
-st.title("Predictive Model ")
+st.title("Predictive Model with Randomized Predictions")
 
 # Upload scored data CSV
 st.header("Upload Scored Data CSV")
