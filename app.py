@@ -21,13 +21,13 @@ def create_pipeline(model):
 
 # Define models with default hyperparameters
 models = {
-    'Logistic Regression': LogisticRegression(),
-    'Decision Tree': DecisionTreeClassifier(),
-    'Random Forest': RandomForestClassifier(),
+    'Logistic Regression': LogisticRegression(random_state=42),
+    'Decision Tree': DecisionTreeClassifier(random_state=42),
+    'Random Forest': RandomForestClassifier(random_state=42),
     'SVM': SVC(),
     'KNN': KNeighborsClassifier(),
-    'Gradient Boosting': GradientBoostingClassifier(),
-    'XGBoost': XGBClassifier(eval_metric='logloss')
+    'Gradient Boosting': GradientBoostingClassifier(random_state=42),
+    'XGBoost': XGBClassifier(eval_metric='logloss', random_state=42)
 }
 
 # Set random seed for reproducibility
@@ -41,58 +41,4 @@ st.header("Upload Scored Data CSV")
 uploaded_file = st.file_uploader("Upload your input CSV file", type=["csv"])
 
 if uploaded_file is not None:
-    # Load the scored data
-    data = pd.read_csv(uploaded_file)
-    
-    # Convert Anomaly_Label from -1 and 1 to 0 and 1
-    data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
-    
-    # Separate features and target
-    X = data.drop(columns=['Anomaly_Label'])
-    y = data['Anomaly_Label']
-    
-    # Split the data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-    
-    # Select model
-    model_name = st.selectbox('Select Model', list(models.keys()))
-    
-    if model_name:
-        model = models[model_name]
-        pipeline = create_pipeline(model)
-        
-        # Train the model
-        pipeline.fit(X_train, y_train)
-        
-        # Introduce randomness to predictions
-        y_pred = pipeline.predict(X_test)
-        np.random.seed(42)  # Set seed again to ensure the same randomness
-        random_indices = np.random.choice(len(y_pred), int(0.1 * len(y_pred)), replace=False)
-        y_pred[random_indices] = 1 - y_pred[random_indices]
-        
-        accuracy = accuracy_score(y_test, y_pred)
-        report = classification_report(y_test, y_pred, output_dict=True)
-        
-        # Display results
-        st.subheader(f"{model_name} Accuracy")
-        st.write(f"{accuracy:.2f}")
-        st.subheader(f"Classification Report for {model_name}")
-        st.write(pd.DataFrame(report).transpose())
-        
-        # Store the results for download
-        result_data = data.copy()
-        result_data['Predicted_Label'] = pipeline.predict(X)
-        
-        st.subheader("Scored Data with Predictions")
-        st.write(result_data.head())
-
-        result_csv = result_data.to_csv(index=False)
-        
-        st.download_button(
-            label="Download Scored Data with Predictions as CSV",
-            data=result_csv,
-            file_name='scored_data_with_predictions.csv',
-            mime='text/csv'
-        )
-else:
-    st.info("Please upload a CSV file to proceed.")
+    # Load
