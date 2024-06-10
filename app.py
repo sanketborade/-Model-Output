@@ -34,7 +34,7 @@ models = {
 np.random.seed(42)
 
 # Streamlit interface
-st.title("Predictive Model with Randomized Predictions")
+st.title("Predictive Model ")
 
 # Upload scored data CSV
 st.header("Upload Scored Data CSV")
