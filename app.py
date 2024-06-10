@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import streamlit as st
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
@@ -33,12 +32,43 @@ models = {
 # Set random seed for reproducibility
 np.random.seed(42)
 
-# Streamlit interface
-st.title("Predictive Model with Randomized Predictions")
+# Load the scored data
+data = pd.read_csv('scored_data.csv')
 
-# Upload scored data CSV
-st.header("Upload Scored Data CSV")
-uploaded_file = st.file_uploader("Upload your input CSV file", type=["csv"])
+# Convert Anomaly_Label from -1 and 1 to 0 and 1
+data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
 
-if uploaded_file is not None:
-    # Load
+# Separate features and target
+X = data.drop(columns=['Anomaly_Label'])
+y = data['Anomaly_Label']
+
+# Split the data into training and testing sets with a smaller test size
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Initialize a dictionary to store the results
+results = {}
+
+# Loop through models and evaluate them without hyperparameter tuning
+for model_name, model in models.items():
+    pipeline = create_pipeline(model)
+    pipeline.fit(X_train, y_train)
+    
+    # Introduce randomness to predictions
+    y_pred = pipeline.predict(X_test)
+    np.random.seed(42)  # Set seed again to ensure the same randomness
+    random_indices = np.random.choice(len(y_pred), int(0.1 * len(y_pred)), replace=False)
+    y_pred[random_indices] = 1 - y_pred[random_indices]
+    
+    accuracy = accuracy_score(y_test, y_pred)
+    results[model_name] = {
+        'accuracy': accuracy,
+        'classification_report': classification_report(y_test, y_pred, output_dict=True)
+    }
+    print(f"{model_name} Accuracy: {accuracy}")
+    print(f"Classification Report for {model_name}:\n")
+    print(classification_report(y_test, y_pred))
+
+# Display the accuracy for all models
+for model_name, info in results.items():
+    print(f"\n{model_name} Accuracy: {info['accuracy']}")
+    print(pd.DataFrame(info['classification_report']).transpose())
