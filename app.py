@@ -48,6 +48,14 @@ if uploaded_file is not None:
         # Convert Anomaly_Label from -1 and 1 to 0 and 1
         data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
         
+        # Count normal points and outliers
+        normal_count = (data['Anomaly_Label'] == 0).sum()
+        outlier_count = (data['Anomaly_Label'] == 1).sum()
+        
+        st.subheader("Counts of Normal Points and Outliers")
+        st.write(f"Normal Points: {normal_count}")
+        st.write(f"Outliers: {outlier_count}")
+        
         # Separate features and target
         X = data.drop(columns=['Anomaly_Label'])
         y = data['Anomaly_Label']
