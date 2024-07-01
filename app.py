@@ -10,7 +10,9 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, roc_curve, roc_auc_score
+import matplotlib.pyplot as plt
+import scikitplot as skplt  # For plotting gain and lift charts
 
 # Define a function to create pipelines
 def create_pipeline(model):
@@ -24,7 +26,7 @@ models = {
     'Logistic Regression': LogisticRegression(random_state=42),
     'Decision Tree': DecisionTreeClassifier(random_state=42),
     'Random Forest': RandomForestClassifier(random_state=42),
-    'SVM': SVC(),
+    'SVM': SVC(probability=True),  # Enable probability estimates
     'KNN': KNeighborsClassifier(),
     'Gradient Boosting': GradientBoostingClassifier(random_state=42),
     'XGBoost': XGBClassifier(eval_metric='logloss', random_state=42)
@@ -71,11 +73,9 @@ if uploaded_file is not None:
             # Train the model
             pipeline.fit(X_train, y_train)
             
-            # Introduce randomness to predictions
+            # Predictions and probabilities
             y_pred = pipeline.predict(X_test)
-            np.random.seed(42)  # Set seed again to ensure the same randomness
-            random_indices = np.random.choice(len(y_pred), int(0.1 * len(y_pred)), replace=False)
-            y_pred[random_indices] = 1 - y_pred[random_indices]
+            y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
             
             accuracy = accuracy_score(y_test, y_pred)
             report = classification_report(y_test, y_pred, output_dict=True)
@@ -109,6 +109,45 @@ if uploaded_file is not None:
                 file_name='scored_data_with_predictions.csv',
                 mime='text/csv'
             )
+            
+            # EDA Tab
+            st.header("Exploratory Data Analysis (EDA)")
+            
+            # ROC Curve
+            st.subheader("ROC Curve")
+            fpr, tpr, _ = roc_curve(y_test, y_pred_proba)
+            roc_auc = roc_auc_score(y_test, y_pred_proba)
+            plt.figure()
+            plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.title('Receiver Operating Characteristic')
+            plt.legend(loc="lower right")
+            st.pyplot(plt)
+            
+            # Gain Chart
+            st.subheader("Gain Chart")
+            skplt.metrics.plot_cumulative_gain(y_test, pipeline.predict_proba(X_test))
+            st.pyplot(plt)
+            
+            # Lift Chart
+            st.subheader("Lift Chart")
+            skplt.metrics.plot_lift_curve(y_test, pipeline.predict_proba(X_test))
+            st.pyplot(plt)
+            
+            # KS Table
+            st.subheader("KS Table")
+            ks_table = pd.DataFrame({
+                'Threshold': _,
+                'FPR': fpr,
+                'TPR': tpr,
+                'KS Statistic': tpr - fpr
+            })
+            st.write(ks_table)
+            
     except Exception as e:
         st.error(f"An error occurred: {e}")
 else:
