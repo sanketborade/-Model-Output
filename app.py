@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import streamlit as st
-from sklearn.model_selection import train_test_split, cross_val_score  # Import cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -26,7 +26,7 @@ models = {
     'Logistic Regression': LogisticRegression(random_state=42),
     'Decision Tree': DecisionTreeClassifier(random_state=42),
     'Random Forest': RandomForestClassifier(random_state=42),
-    'SVM': SVC(probability=True),  # Enable probability estimates
+    'SVM': SVC(probability=True),
     'KNN': KNeighborsClassifier(),
     'Gradient Boosting': GradientBoostingClassifier(random_state=42),
     'XGBoost': XGBClassifier(eval_metric='logloss', random_state=42)
@@ -65,7 +65,7 @@ if uploaded_file is not None:
             pipeline = create_pipeline(model)
             
             # Apply cross-validation
-            cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)  # Use cross_val_score from sklearn.model_selection
+            cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)
             st.subheader(f"Cross-Validation Scores for {model_name}")
             st.write(cv_scores)
             st.write(f"Mean CV Accuracy: {np.mean(cv_scores):.2f}")
@@ -146,13 +146,13 @@ if uploaded_file is not None:
                 'TPR': tpr,
                 'KS Statistic': tpr - fpr
             })
-            # Order by KS Statistic for accurate representation
             ks_table = ks_table.sort_values(by='KS Statistic', ascending=False)
             st.write(ks_table)
             st.subheader("Maximum KS Statistic")
             st.write(f"Maximum KS Statistic: {ks_table['KS Statistic'].max()}")
-            
+
     except Exception as e:
         st.error(f"An error occurred: {e}")
+
 else:
     st.info("Please upload a CSV file to proceed.")
