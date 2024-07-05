@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+import streamlit as st
+from sklearn.model_selection import train_test_split, cross_val_score  # Import cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -12,7 +13,6 @@ from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, classification_report, roc_curve, roc_auc_score
 import matplotlib.pyplot as plt
 import scikitplot as skplt  # For plotting gain and lift charts
-import streamlit as st
 
 # Define a function to create pipelines
 def create_pipeline(model):
@@ -65,7 +65,7 @@ if uploaded_file is not None:
             pipeline = create_pipeline(model)
             
             # Apply cross-validation
-            cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)
+            cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)  # Use cross_val_score from sklearn.model_selection
             st.subheader(f"Cross-Validation Scores for {model_name}")
             st.write(cv_scores)
             st.write(f"Mean CV Accuracy: {np.mean(cv_scores):.2f}")
@@ -146,8 +146,8 @@ if uploaded_file is not None:
                 'TPR': tpr,
                 'KS Statistic': tpr - fpr
             })
-            # Order by thresholds for accurate KS statistics
-            ks_table = ks_table.sort_values(by='Threshold', ascending=False)
+            # Order by KS Statistic for accurate representation
+            ks_table = ks_table.sort_values(by='KS Statistic', ascending=False)
             st.write(ks_table)
             st.subheader("Maximum KS Statistic")
             st.write(f"Maximum KS Statistic: {ks_table['KS Statistic'].max()}")
