@@ -115,7 +115,7 @@ if uploaded_file is not None:
             
             # ROC Curve
             st.subheader("ROC Curve")
-            fpr, tpr, _ = roc_curve(y_test, y_pred_proba)
+            fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
             roc_auc = roc_auc_score(y_test, y_pred_proba)
             plt.figure()
             plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
@@ -141,11 +141,12 @@ if uploaded_file is not None:
             # KS Table
             st.subheader("KS Table")
             ks_table = pd.DataFrame({
-                'Threshold': _,
+                'Threshold': thresholds,
                 'FPR': fpr,
                 'TPR': tpr,
                 'KS Statistic': tpr - fpr
             })
+            ks_table = ks_table.sort_values(by='KS Statistic', ascending=False)
             st.write(ks_table)
             
     except Exception as e:
