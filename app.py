@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-import streamlit as st
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -13,6 +12,7 @@ from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, classification_report, roc_curve, roc_auc_score
 import matplotlib.pyplot as plt
 import scikitplot as skplt  # For plotting gain and lift charts
+import streamlit as st
 
 # Define a function to create pipelines
 def create_pipeline(model):
