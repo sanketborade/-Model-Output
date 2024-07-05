@@ -146,7 +146,7 @@ if uploaded_file is not None:
                 'TPR': tpr,
                 'KS Statistic': tpr - fpr
             })
-            ks_table = ks_table.sort_values(by='KS Statistic', ascending=False)
+            ks_table = ks_table.sort_values(by='KS Statistic', ascending=False)  # Sort KS Statistic in descending order
             st.write(ks_table)
             st.subheader("Maximum KS Statistic")
             st.write(f"Maximum KS Statistic: {ks_table['KS Statistic'].max()}")
