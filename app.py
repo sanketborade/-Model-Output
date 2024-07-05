@@ -146,8 +146,11 @@ if uploaded_file is not None:
                 'TPR': tpr,
                 'KS Statistic': tpr - fpr
             })
-            ks_table = ks_table.sort_values(by='KS Statistic', ascending=False)
+            # Order by thresholds for accurate KS statistics
+            ks_table = ks_table.sort_values(by='Threshold', ascending=False)
             st.write(ks_table)
+            st.subheader("Maximum KS Statistic")
+            st.write(f"Maximum KS Statistic: {ks_table['KS Statistic'].max()}")
             
     except Exception as e:
         st.error(f"An error occurred: {e}")
