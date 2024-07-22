@@ -10,9 +10,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, classification_report, roc_curve, roc_auc_score
-import matplotlib.pyplot as plt
-import scikitplot as skplt  # For plotting gain and lift charts
+from sklearn.metrics import accuracy_score, classification_report
 
 # Define a function to create pipelines
 def create_pipeline(model):
@@ -75,7 +73,6 @@ if uploaded_file is not None:
             
             # Predictions and probabilities
             y_pred = pipeline.predict(X_test)
-            y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
             
             accuracy = accuracy_score(y_test, y_pred)
             report = classification_report(y_test, y_pred, output_dict=True)
@@ -110,49 +107,9 @@ if uploaded_file is not None:
                 mime='text/csv'
             )
             
-            # EDA Tab
-            st.header("Exploratory Data Analysis (EDA)")
-            
-            # ROC Curve
-            st.subheader("ROC Curve")
-            fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
-            roc_auc = roc_auc_score(y_test, y_pred_proba)
-            plt.figure()
-            plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
-            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-            plt.xlim([0.0, 1.0])
-            plt.ylim([0.0, 1.05])
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
-            plt.title('Receiver Operating Characteristic')
-            plt.legend(loc="lower right")
-            st.pyplot(plt)
-            
-            # Gain Chart
-            st.subheader("Gain Chart")
-            skplt.metrics.plot_cumulative_gain(y_test, pipeline.predict_proba(X_test))
-            st.pyplot(plt)
-            
-            # Lift Chart
-            st.subheader("Lift Chart")
-            skplt.metrics.plot_lift_curve(y_test, pipeline.predict_proba(X_test))
-            st.pyplot(plt)
-            
-            # KS Table
-            st.subheader("KS Table")
-            ks_table = pd.DataFrame({
-                'Threshold': thresholds,
-                'FPR': fpr,
-                'TPR': tpr,
-                'KS Statistic': tpr - fpr
-            })
-            ks_table = ks_table.sort_values(by='KS Statistic', ascending=False)  # Sort KS Statistic in descending order
-            st.write(ks_table)
-            st.subheader("Maximum KS Statistic")
-            st.write(f"Maximum KS Statistic: {ks_table['KS Statistic'].max()}")
-
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
 else:
     st.info("Please upload a CSV file to proceed.")
+
