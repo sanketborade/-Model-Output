@@ -99,6 +99,7 @@ if uploaded_file is not None:
                 shap_values = explainer(X_test)
                 
                 # Summary plot
+                st.set_option('deprecation.showPyplotGlobalUse', False)
                 shap.summary_plot(shap_values, X_test, plot_type="bar")
                 st.pyplot(bbox_inches='tight')
                 
