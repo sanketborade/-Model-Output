@@ -8,3 +8,4 @@ hdbscan==0.8.33
 seaborn==0.12.2
 xgboost==2.0.3
 scikit-plot==0.3.7
+shap==0.44.1
