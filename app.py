@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import pickle
 import shap
 import matplotlib.pyplot as plt
@@ -61,18 +61,14 @@ if uploaded_file is not None:
             # Split the data into training and testing sets
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
             
-            # Select model
-            model_name = st.selectbox('Select Model', list(models.keys()))
+            results = []
             
-            if model_name:
-                model = models[model_name]
+            for model_name, model in models.items():
                 pipeline = create_pipeline(model)
                 
                 # Apply cross-validation
                 cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)
-                st.subheader(f"Cross-Validation Scores for {model_name}")
-                st.write(cv_scores)
-                st.write(f"Mean CV Accuracy: {np.mean(cv_scores):.2f}")
+                mean_cv_accuracy = np.mean(cv_scores)
                 
                 # Train the model
                 pipeline.fit(X_train, y_train)
@@ -85,48 +81,72 @@ if uploaded_file is not None:
                 y_pred = pipeline.predict(X_test)
                 
                 accuracy = accuracy_score(y_test, y_pred)
-                report = classification_report(y_test, y_pred, output_dict=True)
+                precision = precision_score(y_test, y_pred)
+                recall = recall_score(y_test, y_pred)
+                f1 = f1_score(y_test, y_pred)
                 
-                # Display results
-                st.subheader(f"{model_name} Accuracy")
-                st.write(f"{accuracy:.2f}")
-                st.subheader(f"Classification Report for {model_name}")
-                st.write(pd.DataFrame(report).transpose())
-                
-                # Calculate SHAP values
-                st.subheader("SHAP Values")
-                explainer = shap.Explainer(pipeline.named_steps['classifier'], X_train)
-                shap_values = explainer(X_test)
-                
-                # Summary plot
-                st.set_option('deprecation.showPyplotGlobalUse', False)
-                shap.summary_plot(shap_values, X_test, plot_type="bar")
-                st.pyplot(bbox_inches='tight')
-                
-                # Store the results for download
-                result_data = data.copy()
-                result_data['Predicted_Label'] = pipeline.predict(X)
-                
-                # Count normal points and outliers after prediction
-                normal_count_pred = (result_data['Predicted_Label'] == 0).sum()
-                outlier_count_pred = (result_data['Predicted_Label'] == 1).sum()
-                
-                st.subheader("Counts of Normal Points and Outliers After Prediction")
-                st.write(f"Normal Points: {normal_count_pred}")
-                st.write(f"Outliers: {outlier_count_pred}")
-                
-                st.subheader("Scored Data with Predictions")
-                st.write(result_data.head())
-    
-                result_csv = result_data.to_csv(index=False)
-                
-                st.download_button(
-                    label="Download Scored Data with Predictions as CSV",
-                    data=result_csv,
-                    file_name='scored_data_with_predictions.csv',
-                    mime='text/csv'
-                )
-                
+                # Collect results
+                results.append({
+                    'Model': model_name,
+                    'Mean CV Accuracy': mean_cv_accuracy,
+                    'Accuracy': accuracy,
+                    'Precision': precision,
+                    'Recall': recall,
+                    'F1 Score': f1
+                })
+            
+            # Display results in a table
+            results_df = pd.DataFrame(results)
+            st.subheader("Model Performance Comparison")
+            st.write(results_df)
+            
+            # Calculate SHAP values for the best model (highest accuracy)
+            best_model_name = results_df.loc[results_df['Accuracy'].idxmax()]['Model']
+            best_model = models[best_model_name]
+            best_pipeline = create_pipeline(best_model)
+            best_pipeline.fit(X_train, y_train)
+            
+            st.subheader(f"SHAP Values for {best_model_name}")
+            explainer = shap.Explainer(best_pipeline.named_steps['classifier'], X_train)
+            shap_values = explainer(X_test)
+            
+            # Summary plot
+            st.set_option('deprecation.showPyplotGlobalUse', False)
+            shap.summary_plot(shap_values, X_test, plot_type="bar")
+            st.pyplot(bbox_inches='tight')
+            
+            # Feature importance (for tree-based models)
+            if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting']:
+                st.subheader(f"Feature Importance for {best_model_name}")
+                importance = best_pipeline.named_steps['classifier'].feature_importances_
+                importance_df = pd.DataFrame({'Feature': X.columns, 'Importance': importance})
+                importance_df = importance_df.sort_values(by='Importance', ascending=False)
+                st.bar_chart(importance_df.set_index('Feature'))
+            
+            # Store the results for download
+            result_data = data.copy()
+            result_data['Predicted_Label'] = best_pipeline.predict(X)
+            
+            # Count normal points and outliers after prediction
+            normal_count_pred = (result_data['Predicted_Label'] == 0).sum()
+            outlier_count_pred = (result_data['Predicted_Label'] == 1).sum()
+            
+            st.subheader("Counts of Normal Points and Outliers After Prediction")
+            st.write(f"Normal Points: {normal_count_pred}")
+            st.write(f"Outliers: {outlier_count_pred}")
+            
+            st.subheader("Scored Data with Predictions")
+            st.write(result_data.head())
+
+            result_csv = result_data.to_csv(index=False)
+            
+            st.download_button(
+                label="Download Scored Data with Predictions as CSV",
+                data=result_csv,
+                file_name='scored_data_with_predictions.csv',
+                mime='text/csv'
+            )
+            
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
