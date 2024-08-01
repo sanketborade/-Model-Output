@@ -27,6 +27,16 @@ def create_pipeline(model):
         ('classifier', model)
     ])
 
+# Function to find the best model
+def find_best_model(results):
+    best_accuracy = 0
+    best_model_name = ""
+    for model_name, info in results.items():
+        if info['accuracy'] > best_accuracy:
+            best_accuracy = info['accuracy']
+            best_model_name = model_name
+    return best_model_name, best_accuracy, results[best_model_name]
+
 # Upload Data Tab
 if option == "Upload Data":
     st.header("Upload Data")
@@ -87,8 +97,13 @@ if option == "Model Evaluation":
         
         # Define models with default hyperparameters
         models = {
+            'Logistic Regression': LogisticRegression(),
             'Decision Tree': DecisionTreeClassifier(),
-            'Random Forest': RandomForestClassifier()
+            'Random Forest': RandomForestClassifier(),
+            'SVM': SVC(),
+            'KNN': KNeighborsClassifier(),
+            'Gradient Boosting': GradientBoostingClassifier(),
+            'XGBoost': XGBClassifier(eval_metric='logloss')
         }
         
         # Initialize a dictionary to store the results
@@ -109,24 +124,20 @@ if option == "Model Evaluation":
                 'accuracy': accuracy,
                 'classification_report': classification_report(y_test, y_pred, output_dict=True)
             }
-            st.write(f"{model_name} Accuracy: {accuracy}")
-            st.write(f"Classification Report for {model_name}:\n")
-            st.write(pd.DataFrame(results[model_name]['classification_report']).transpose())
         
-        # Find and display the better model between Decision Tree and Random Forest
-        dt_accuracy = results['Decision Tree']['accuracy']
-        rf_accuracy = results['Random Forest']['accuracy']
+        # Display the accuracy for all models in a table
+        st.write("Summary of model accuracies:")
+        accuracy_data = pd.DataFrame({
+            'Model': list(results.keys()),
+            'Accuracy': [info['accuracy'] for info in results.values()]
+        })
+        st.write(accuracy_data)
         
-        if dt_accuracy > rf_accuracy:
-            best_model_name = 'Decision Tree'
-            best_model_info = results['Decision Tree']
-        else:
-            best_model_name = 'Random Forest'
-            best_model_info = results['Random Forest']
-        
-        st.write(f"\nBetter Model: {best_model_name}")
-        st.write(f"Better Model Accuracy: {best_model_info['accuracy']}")
-        st.write("Better Model Classification Report:")
+        # Find and display the best model
+        best_model_name, best_accuracy, best_model_info = find_best_model(results)
+        st.write(f"\nBest Model: {best_model_name}")
+        st.write(f"Best Model Accuracy: {best_accuracy}")
+        st.write("Best Model Classification Report:")
         st.write(pd.DataFrame(best_model_info['classification_report']).transpose())
     else:
         st.write("Please upload a CSV file to proceed.")
