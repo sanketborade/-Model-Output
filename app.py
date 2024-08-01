@@ -29,13 +29,16 @@ def create_pipeline(model):
 
 # Function to find the best model
 def find_best_model(results):
-    best_accuracy = 0
     best_model_name = ""
+    best_score = 0
     for model_name, info in results.items():
-        if info['accuracy'] > best_accuracy:
-            best_accuracy = info['accuracy']
+        accuracy = info['accuracy']
+        f1_score = info['classification_report']['weighted avg']['f1-score']
+        score = (accuracy + f1_score) / 2
+        if score > best_score:
+            best_score = score
             best_model_name = model_name
-    return best_model_name, best_accuracy, results[best_model_name]
+    return best_model_name, best_score, results[best_model_name]
 
 # Upload Data Tab
 if option == "Upload Data":
@@ -129,14 +132,15 @@ if option == "Model Evaluation":
         st.write("Summary of model accuracies:")
         accuracy_data = pd.DataFrame({
             'Model': list(results.keys()),
-            'Accuracy': [info['accuracy'] for info in results.values()]
+            'Accuracy': [info['accuracy'] for info in results.values()],
+            'F1-Score': [info['classification_report']['weighted avg']['f1-score'] for info in results.values()]
         })
         st.write(accuracy_data)
         
         # Find and display the best model
-        best_model_name, best_accuracy, best_model_info = find_best_model(results)
+        best_model_name, best_score, best_model_info = find_best_model(results)
         st.write(f"\nBest Model: {best_model_name}")
-        st.write(f"Best Model Accuracy: {best_accuracy}")
+        st.write(f"Best Model Score (average of accuracy and F1-score): {best_score}")
         st.write("Best Model Classification Report:")
         st.write(pd.DataFrame(best_model_info['classification_report']).transpose())
     else:
