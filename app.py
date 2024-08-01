@@ -124,9 +124,14 @@ if option == "Model Evaluation":
                 'accuracy': accuracy,
                 'classification_report': classification_report(y_test, y_pred, output_dict=True)
             }
-            st.write(f"{model_name} Accuracy: {accuracy}")
-            st.write(f"Classification Report for {model_name}:\n")
-            st.write(pd.DataFrame(results[model_name]['classification_report']).transpose())
+        
+        # Display the accuracy for all models in a table
+        st.write("Summary of model accuracies:")
+        accuracy_data = pd.DataFrame({
+            'Model': list(results.keys()),
+            'Accuracy': [info['accuracy'] for info in results.values()]
+        })
+        st.write(accuracy_data)
         
         # Find and display the best model
         best_model_name, best_accuracy, best_model_info = find_best_model(results)
