@@ -43,6 +43,7 @@ if option == "Upload Data":
     uploaded_file = st.file_uploader("Upload your scored data CSV file", type="csv")
     if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
+        st.session_state['data'] = data
         st.write("Data Preview:")
         st.write(data.head())
 else:
@@ -51,9 +52,8 @@ else:
 # EDA Tab
 if option == "EDA":
     st.header("Exploratory Data Analysis")
-    uploaded_file = st.file_uploader("Upload your scored data CSV file", type="csv")
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
+    if 'data' in st.session_state:
+        data = st.session_state['data']
         st.write("Data Preview:")
         st.write(data.head())
         
@@ -80,14 +80,13 @@ if option == "EDA":
                 ax.set_title(f'Distribution of {col}')
                 st.pyplot(fig)
     else:
-        st.write("Please upload a CSV file to proceed.")
+        st.write("Please upload a CSV file in the 'Upload Data' tab.")
 
 # Model Evaluation Tab
 if option == "Model Evaluation":
     st.header("Model Evaluation")
-    uploaded_file = st.file_uploader("Upload your scored data CSV file", type="csv")
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
+    if 'data' in st.session_state:
+        data = st.session_state['data']
         
         # Preprocess data
         data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
@@ -141,37 +140,34 @@ if option == "Model Evaluation":
         st.write(pd.DataFrame(best_model_info['classification_report']).transpose())
         
         # Store the best model in session state for later use
-        st.session_state['best_model'] = models[best_model_name]
+        st.session_state['best_model_name'] = best_model_name
         st.session_state['best_pipeline'] = create_pipeline(models[best_model_name])
         st.session_state['best_pipeline'].fit(X_train, y_train)
     else:
-        st.write("Please upload a CSV file to proceed.")
+        st.write("Please upload a CSV file in the 'Upload Data' tab.")
 
 # Prediction Tab
 if option == "Prediction":
     st.header("Make Predictions")
-    if 'best_model' not in st.session_state:
+    if 'best_pipeline' not in st.session_state:
         st.write("Please evaluate models in the 'Model Evaluation' tab first.")
     else:
-        uploaded_file = st.file_uploader("Upload new data CSV file for predictions", type="csv")
-        if uploaded_file is not None:
-            new_data = pd.read_csv(uploaded_file)
-            st.write("New Data Preview:")
-            st.write(new_data.head())
-            
-            if 'Anomaly_Label' in new_data.columns:
-                new_data = new_data.drop(columns=['Anomaly_Label'])
-            
-            predictions = st.session_state['best_pipeline'].predict(new_data)
-            new_data['Predictions'] = predictions
-            st.write("Predictions:")
-            st.write(new_data)
-            
-            # Allow users to download the predictions
-            csv = new_data.to_csv(index=False)
-            st.download_button(
-                label="Download Predictions as CSV",
-                data=csv,
-                file_name='predictions.csv',
-                mime='text/csv',
-            )
+        data = st.session_state['data']
+        if 'Anomaly_Label' in data.columns:
+            X = data.drop(columns=['Anomaly_Label'])
+        else:
+            X = data
+        
+        predictions = st.session_state['best_pipeline'].predict(X)
+        data['Predictions'] = predictions
+        st.write("Predictions:")
+        st.write(data)
+        
+        # Allow users to download the predictions
+        csv = data.to_csv(index=False)
+        st.download_button(
+            label="Download Predictions as CSV",
+            data=csv,
+            file_name='predictions.csv',
+            mime='text/csv',
+        )
