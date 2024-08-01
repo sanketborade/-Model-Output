@@ -152,19 +152,16 @@ if option == "Prediction":
     if 'best_pipeline' not in st.session_state:
         st.write("Please evaluate models in the 'Model Evaluation' tab first.")
     else:
-        data = st.session_state['data']
-        if 'Anomaly_Label' in data.columns:
-            X = data.drop(columns=['Anomaly_Label'])
-        else:
-            X = data
+        data = st.session_state['data'].drop(columns=['Anomaly_Label'])
         
-        predictions = st.session_state['best_pipeline'].predict(X)
-        data['Predictions'] = predictions
+        predictions = st.session_state['best_pipeline'].predict(data)
+        prediction_results = data.copy()
+        prediction_results['Predictions'] = predictions
         st.write("Predictions:")
-        st.write(data)
+        st.write(prediction_results)
         
         # Allow users to download the predictions
-        csv = data.to_csv(index=False)
+        csv = prediction_results.to_csv(index=False)
         st.download_button(
             label="Download Predictions as CSV",
             data=csv,
