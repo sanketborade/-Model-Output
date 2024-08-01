@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, classification_report
 import pickle
 import shap
 import matplotlib.pyplot as plt
@@ -56,10 +56,11 @@ if uploaded_file is not None:
             data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
             
             # Create tabs
-            tab1, tab2 = st.tabs(["Exploratory Data Analysis", "Model Performance Comparison"])
+            tab1, tab2 = st.tabs(["Exploratory Data Analysis", "Model Performance"])
             
             with tab1:
                 st.subheader("Exploratory Data Analysis")
+                
                 st.write("### Basic Information")
                 st.write(data.describe())
                 
@@ -75,9 +76,9 @@ if uploaded_file is not None:
                 corr = data.corr()
                 sns.heatmap(corr, annot=True, cmap='coolwarm')
                 st.pyplot()
-
+            
             with tab2:
-                st.subheader("Model Performance Comparison")
+                st.subheader("Model Performance")
                 
                 # Separate features and target
                 X = data.drop(columns=['Anomaly_Label'])
@@ -106,18 +107,13 @@ if uploaded_file is not None:
                     y_pred = pipeline.predict(X_test)
                     
                     accuracy = accuracy_score(y_test, y_pred)
-                    precision = precision_score(y_test, y_pred)
-                    recall = recall_score(y_test, y_pred)
-                    f1 = f1_score(y_test, y_pred)
+                    report = classification_report(y_test, y_pred, output_dict=True)
                     
                     # Collect results
                     results.append({
                         'Model': model_name,
                         'Mean CV Accuracy': mean_cv_accuracy,
-                        'Accuracy': accuracy,
-                        'Precision': precision,
-                        'Recall': recall,
-                        'F1 Score': f1
+                        'Accuracy': accuracy
                     })
                 
                 # Display results in a table
