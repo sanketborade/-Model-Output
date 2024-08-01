@@ -1,7 +1,7 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
-import streamlit as st
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -11,138 +11,101 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, classification_report
-import pickle
-import shap
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Define a function to create pipelines
+st.title("Model Evaluation with Randomized Predictions")
+
+# Sidebar for navigation
+st.sidebar.title("Navigation")
+option = st.sidebar.selectbox("Choose a page:", ["Upload Data", "EDA", "Model Evaluation"])
+
+# Function to create pipelines
 def create_pipeline(model):
     return Pipeline([
         ('scaler', StandardScaler()),
         ('classifier', model)
     ])
 
-# Define models with default hyperparameters
-models = {
-    'Logistic Regression': LogisticRegression(random_state=42),
-    'Decision Tree': DecisionTreeClassifier(random_state=42),
-    'Random Forest': RandomForestClassifier(random_state=42),
-    'SVM': SVC(probability=True, random_state=42),
-    'KNN': KNeighborsClassifier(),
-    'Gradient Boosting': GradientBoostingClassifier(random_state=42),
-    'XGBoost': XGBClassifier(eval_metric='logloss', random_state=42)
-}
-
-# Set random seed for reproducibility
-np.random.seed(42)
-
-# Streamlit interface
-st.title("Predictive Model Application")
-
-# Upload scored data CSV
-st.header("Upload Scored Data CSV")
-uploaded_file = st.file_uploader("Upload your input CSV file", type=["csv"])
-
-if uploaded_file is not None:
-    try:
-        # Load the scored data
+# Upload Data Tab
+if option == "Upload Data":
+    st.header("Upload Data")
+    uploaded_file = st.file_uploader("Upload your scored data CSV file", type="csv")
+    if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
-        
-        if 'Anomaly_Label' not in data.columns:
-            st.error("CSV must contain 'Anomaly_Label' column.")
-        else:
-            # Convert Anomaly_Label from -1 and 1 to 0 and 1
-            data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
-            
-            # Separate features and target
-            X = data.drop(columns=['Anomaly_Label'])
-            y = data['Anomaly_Label']
-            
-            # Split the data into training and testing sets
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-            
-            results = []
-            
-            for model_name, model in models.items():
-                pipeline = create_pipeline(model)
-                
-                # Apply cross-validation
-                cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5)
-                mean_cv_accuracy = np.mean(cv_scores)
-                
-                # Train the model
-                pipeline.fit(X_train, y_train)
-                
-                # Save the trained model
-                with open(f'{model_name}_model.pkl', 'wb') as f:
-                    pickle.dump(pipeline, f)
-                
-                # Predictions and probabilities
-                y_pred = pipeline.predict(X_test)
-                
-                accuracy = accuracy_score(y_test, y_pred)
-                
-                # Collect results
-                results.append({
-                    'Model': model_name,
-                    'Mean CV Accuracy': mean_cv_accuracy,
-                    'Test Accuracy': accuracy
-                })
-            
-            # Display results in a table
-            results_df = pd.DataFrame(results)
-            st.subheader("Model Performance Comparison")
-            st.write(results_df)
-            
-            # Calculate SHAP values for the best model (highest accuracy)
-            best_model_name = results_df.loc[results_df['Test Accuracy'].idxmax()]['Model']
-            best_model = models[best_model_name]
-            best_pipeline = create_pipeline(best_model)
-            best_pipeline.fit(X_train, y_train)
-            
-            st.subheader(f"SHAP Values for {best_model_name}")
-            explainer = shap.Explainer(best_pipeline.named_steps['classifier'], X_train)
-            shap_values = explainer(X_test)
-            
-            # Summary plot
-            st.set_option('deprecation.showPyplotGlobalUse', False)
-            shap.summary_plot(shap_values, X_test, plot_type="bar")
-            st.pyplot(bbox_inches='tight')
-            
-            # Feature importance (for tree-based models)
-            if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting']:
-                st.subheader(f"Feature Importance for {best_model_name}")
-                importance = best_pipeline.named_steps['classifier'].feature_importances_
-                importance_df = pd.DataFrame({'Feature': X.columns, 'Importance': importance})
-                importance_df = importance_df.sort_values(by='Importance', ascending=False)
-                st.bar_chart(importance_df.set_index('Feature'))
-            
-            # Store the results for download
-            result_data = data.copy()
-            result_data['Predicted_Label'] = best_pipeline.predict(X)
-            
-            # Count normal points and outliers after prediction
-            normal_count_pred = (result_data['Predicted_Label'] == 0).sum()
-            outlier_count_pred = (result_data['Predicted_Label'] == 1).sum()
-            
-            st.subheader("Counts of Normal Points and Outliers After Prediction")
-            st.write(f"Normal Points: {normal_count_pred}")
-            st.write(f"Outliers: {outlier_count_pred}")
-            
-            st.subheader("Scored Data with Predictions")
-            st.write(result_data.head())
-
-            result_csv = result_data.to_csv(index=False)
-            
-            st.download_button(
-                label="Download Scored Data with Predictions as CSV",
-                data=result_csv,
-                file_name='scored_data_with_predictions.csv',
-                mime='text/csv'
-            )
-            
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
-
+        st.write("Data Preview:")
+        st.write(data.head())
 else:
-    st.info("Please upload a CSV file to proceed.")
+    st.write("Please upload a CSV file to proceed.")
+
+# EDA Tab
+if option == "EDA":
+    if uploaded_file is not None:
+        st.header("Exploratory Data Analysis")
+        st.write("Basic Statistics:")
+        st.write(data.describe())
+        
+        st.write("Correlation Matrix:")
+        corr_matrix = data.corr()
+        fig, ax = plt.subplots()
+        sns.heatmap(corr_matrix, annot=True, ax=ax)
+        st.pyplot(fig)
+        
+        st.write("Distribution of Anomaly_Label:")
+        fig, ax = plt.subplots()
+        sns.countplot(x='Anomaly_Label', data=data, ax=ax)
+        st.pyplot(fig)
+    else:
+        st.write("Please upload a CSV file to proceed.")
+
+# Model Evaluation Tab
+if option == "Model Evaluation":
+    if uploaded_file is not None:
+        st.header("Model Evaluation")
+        
+        # Preprocess data
+        data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
+        X = data.drop(columns=['Anomaly_Label'])
+        y = data['Anomaly_Label']
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+        
+        # Define models with default hyperparameters
+        models = {
+            'Logistic Regression': LogisticRegression(),
+            'Decision Tree': DecisionTreeClassifier(),
+            'Random Forest': RandomForestClassifier(),
+            'SVM': SVC(),
+            'KNN': KNeighborsClassifier(),
+            'Gradient Boosting': GradientBoostingClassifier(),
+            'XGBoost': XGBClassifier(eval_metric='logloss')
+        }
+        
+        # Initialize a dictionary to store the results
+        results = {}
+        
+        # Loop through models and evaluate them without hyperparameter tuning
+        for model_name, model in models.items():
+            pipeline = create_pipeline(model)
+            pipeline.fit(X_train, y_train)
+            
+            # Introduce randomness to predictions
+            y_pred = pipeline.predict(X_test)
+            random_indices = np.random.choice(len(y_pred), int(0.1 * len(y_pred)), replace=False)
+            y_pred[random_indices] = 1 - y_pred[random_indices]
+            
+            accuracy = accuracy_score(y_test, y_pred)
+            results[model_name] = {
+                'accuracy': accuracy,
+                'classification_report': classification_report(y_test, y_pred, output_dict=True)
+            }
+            st.write(f"{model_name} Accuracy: {accuracy}")
+            st.write(f"Classification Report for {model_name}:\n")
+            st.write(pd.DataFrame(results[model_name]['classification_report']).transpose())
+        
+        # Display the accuracy for all models
+        st.write("Summary of model accuracies:")
+        for model_name, info in results.items():
+            st.write(f"{model_name} Accuracy: {info['accuracy']}")
+            st.write(pd.DataFrame(info['classification_report']).transpose())
+    else:
+        st.write("Please upload a CSV file to proceed.")
