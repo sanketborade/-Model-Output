@@ -40,8 +40,13 @@ else:
 
 # EDA Tab
 if option == "EDA":
+    st.header("Exploratory Data Analysis")
+    uploaded_file = st.file_uploader("Upload your scored data CSV file", type="csv")
     if uploaded_file is not None:
-        st.header("Exploratory Data Analysis")
+        data = pd.read_csv(uploaded_file)
+        st.write("Data Preview:")
+        st.write(data.head())
+        
         st.write("Basic Statistics:")
         st.write(data.describe())
         
@@ -55,13 +60,24 @@ if option == "EDA":
         fig, ax = plt.subplots()
         sns.countplot(x='Anomaly_Label', data=data, ax=ax)
         st.pyplot(fig)
+        
+        st.write("Histograms of Features:")
+        num_cols = data.select_dtypes(include=np.number).columns
+        for col in num_cols:
+            if col != 'Anomaly_Label':
+                fig, ax = plt.subplots()
+                sns.histplot(data[col], kde=True, ax=ax)
+                ax.set_title(f'Distribution of {col}')
+                st.pyplot(fig)
     else:
         st.write("Please upload a CSV file to proceed.")
 
 # Model Evaluation Tab
 if option == "Model Evaluation":
+    st.header("Model Evaluation")
+    uploaded_file = st.file_uploader("Upload your scored data CSV file", type="csv")
     if uploaded_file is not None:
-        st.header("Model Evaluation")
+        data = pd.read_csv(uploaded_file)
         
         # Preprocess data
         data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
