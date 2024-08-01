@@ -18,7 +18,7 @@ st.title("Model Evaluation with Randomized Predictions")
 
 # Sidebar for navigation
 st.sidebar.title("Navigation")
-option = st.sidebar.selectbox("Choose a page:", ["Upload Data", "EDA", "Model Evaluation"])
+option = st.sidebar.selectbox("Choose a page:", ["Upload Data", "EDA", "Model Evaluation", "Prediction"])
 
 # Function to create pipelines
 def create_pipeline(model):
@@ -139,5 +139,39 @@ if option == "Model Evaluation":
         st.write(f"Best Model Accuracy: {best_accuracy}")
         st.write("Best Model Classification Report:")
         st.write(pd.DataFrame(best_model_info['classification_report']).transpose())
+        
+        # Store the best model in session state for later use
+        st.session_state['best_model'] = models[best_model_name]
+        st.session_state['best_pipeline'] = create_pipeline(models[best_model_name])
+        st.session_state['best_pipeline'].fit(X_train, y_train)
     else:
         st.write("Please upload a CSV file to proceed.")
+
+# Prediction Tab
+if option == "Prediction":
+    st.header("Make Predictions")
+    if 'best_model' not in st.session_state:
+        st.write("Please evaluate models in the 'Model Evaluation' tab first.")
+    else:
+        uploaded_file = st.file_uploader("Upload new data CSV file for predictions", type="csv")
+        if uploaded_file is not None:
+            new_data = pd.read_csv(uploaded_file)
+            st.write("New Data Preview:")
+            st.write(new_data.head())
+            
+            if 'Anomaly_Label' in new_data.columns:
+                new_data = new_data.drop(columns=['Anomaly_Label'])
+            
+            predictions = st.session_state['best_pipeline'].predict(new_data)
+            new_data['Predictions'] = predictions
+            st.write("Predictions:")
+            st.write(new_data)
+            
+            # Allow users to download the predictions
+            csv = new_data.to_csv(index=False)
+            st.download_button(
+                label="Download Predictions as CSV",
+                data=csv,
+                file_name='predictions.csv',
+                mime='text/csv',
+            )
