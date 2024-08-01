@@ -81,28 +81,21 @@ if uploaded_file is not None:
                 y_pred = pipeline.predict(X_test)
                 
                 accuracy = accuracy_score(y_test, y_pred)
-                report = classification_report(y_test, y_pred, output_dict=True)
                 
                 # Collect results
                 results.append({
                     'Model': model_name,
                     'Mean CV Accuracy': mean_cv_accuracy,
-                    'Accuracy': accuracy,
-                    'Classification Report': report
+                    'Test Accuracy': accuracy
                 })
             
             # Display results in a table
-            results_df = pd.DataFrame(results).drop(columns=['Classification Report'])
+            results_df = pd.DataFrame(results)
             st.subheader("Model Performance Comparison")
             st.write(results_df)
             
-            # Display detailed classification reports for each model
-            for result in results:
-                st.subheader(f"Classification Report for {result['Model']}")
-                st.write(pd.DataFrame(result['Classification Report']).transpose())
-            
             # Calculate SHAP values for the best model (highest accuracy)
-            best_model_name = results_df.loc[results_df['Accuracy'].idxmax()]['Model']
+            best_model_name = results_df.loc[results_df['Test Accuracy'].idxmax()]['Model']
             best_model = models[best_model_name]
             best_pipeline = create_pipeline(best_model)
             best_pipeline.fit(X_train, y_train)
