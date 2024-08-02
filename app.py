@@ -38,6 +38,16 @@ def find_best_model(results):
             best_model_name = model_name
     return best_model_name, best_accuracy, results[best_model_name]
 
+# Initialize session state variables
+if 'data' not in st.session_state:
+    st.session_state['data'] = None
+if 'best_model_name' not in st.session_state:
+    st.session_state['best_model_name'] = None
+if 'best_pipeline' not in st.session_state:
+    st.session_state['best_pipeline'] = None
+if 'X_train' not in st.session_state:
+    st.session_state['X_train'] = None
+
 # Upload Data Tab
 if option == "Upload Data":
     st.header("Upload Data")
@@ -53,7 +63,7 @@ else:
 # EDA Tab
 if option == "EDA":
     st.header("Exploratory Data Analysis")
-    if 'data' in st.session_state:
+    if st.session_state['data'] is not None:
         data = st.session_state['data']
         st.write("Data Preview:")
         st.write(data.head())
@@ -86,7 +96,7 @@ if option == "EDA":
 # Model Evaluation Tab
 if option == "Model Evaluation":
     st.header("Model Evaluation")
-    if 'data' in st.session_state:
+    if st.session_state['data'] is not None:
         data = st.session_state['data']
         
         # Preprocess data
@@ -151,7 +161,7 @@ if option == "Model Evaluation":
 # Prediction Tab
 if option == "Prediction":
     st.header("Make Predictions")
-    if 'best_pipeline' not in st.session_state:
+    if st.session_state['best_pipeline'] is None:
         st.write("Please evaluate models in the 'Model Evaluation' tab first.")
     else:
         data = st.session_state['data'].drop(columns=['Anomaly_Label'])
@@ -174,13 +184,12 @@ if option == "Prediction":
 # Variable Importance & SHAP Values Tab
 if option == "Variable Importance & SHAP Values":
     st.header("Variable Importance & SHAP Values")
-    if 'best_pipeline' not in st.session_state:
+    if st.session_state['best_pipeline'] is None:
         st.write("Please evaluate models in the 'Model Evaluation' tab first.")
     else:
         best_model_name = st.session_state['best_model_name']
         best_pipeline = st.session_state['best_pipeline']
         X_train = st.session_state['X_train']
-        data = st.session_state['data']
         
         if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
             classifier = best_pipeline.named_steps['classifier']
