@@ -144,6 +144,7 @@ if option == "Model Evaluation":
         st.session_state['best_model_name'] = best_model_name
         st.session_state['best_pipeline'] = create_pipeline(models[best_model_name])
         st.session_state['best_pipeline'].fit(X_train, y_train)
+        st.session_state['X_train'] = X_train
     else:
         st.write("Please upload a CSV file in the 'Upload Data' tab.")
 
@@ -178,35 +179,37 @@ if option == "Variable Importance & SHAP Values":
     else:
         best_model_name = st.session_state['best_model_name']
         best_pipeline = st.session_state['best_pipeline']
+        X_train = st.session_state['X_train']
         data = st.session_state['data']
+        
         if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
-            if best_model_name == 'XGBoost':
-                importance = best_pipeline.named_steps['classifier'].feature_importances_
-            else:
-                importance = best_pipeline.named_steps['classifier'].feature_importances_
-            
-            feature_importance = pd.DataFrame({
-                'Feature': data.drop(columns=['Anomaly_Label']).columns,
-                'Importance': importance
-            }).sort_values(by='Importance', ascending=False)
-            
-            st.write("Feature Importances:")
-            st.write(feature_importance)
-            
-            fig, ax = plt.subplots()
-            sns.barplot(x='Importance', y='Feature', data=feature_importance, ax=ax)
-            st.pyplot(fig)
+            classifier = best_pipeline.named_steps['classifier']
+            if hasattr(classifier, 'feature_importances_'):
+                importance = classifier.feature_importances_
+                feature_importance = pd.DataFrame({
+                    'Feature': X_train.columns,
+                    'Importance': importance
+                }).sort_values(by='Importance', ascending=False)
+                
+                st.write("Feature Importances:")
+                st.write(feature_importance)
+                
+                fig, ax = plt.subplots()
+                sns.barplot(x='Importance', y='Feature', data=feature_importance, ax=ax)
+                st.pyplot(fig)
             
             # SHAP values
-            explainer = shap.Explainer(best_pipeline.named_steps['classifier'])
-            shap_values = explainer(data.drop(columns=['Anomaly_Label']))
+            explainer = shap.Explainer(classifier, X_train)
+            shap_values = explainer(X_train)
             
             st.write("SHAP Summary Plot:")
-            shap.summary_plot(shap_values, data.drop(columns=['Anomaly_Label']), show=False)
-            st.pyplot(bbox_inches='tight')
+            fig, ax = plt.subplots()
+            shap.summary_plot(shap_values, X_train, show=False)
+            st.pyplot(fig)
             
             st.write("SHAP Dependence Plot for the most important feature:")
-            shap.dependence_plot(feature_importance['Feature'].iloc[0], shap_values, data.drop(columns=['Anomaly_Label']), show=False)
-            st.pyplot(bbox_inches='tight')
+            fig, ax = plt.subplots()
+            shap.dependence_plot(feature_importance['Feature'].iloc[0], shap_values, X_train, show=False)
+            st.pyplot(fig)
         else:
             st.write("Variable importance is not available for the best model (not a tree-based model).")
