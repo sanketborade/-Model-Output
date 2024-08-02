@@ -172,6 +172,12 @@ if option == "Prediction":
         st.write("Predictions:")
         st.write(prediction_results)
         
+        # Count normal points and anomalies
+        normal_count = (predictions == 0).sum()
+        anomaly_count = (predictions == 1).sum()
+        st.write(f"Normal Points: {normal_count}")
+        st.write(f"Anomaly Points: {anomaly_count}")
+        
         # Allow users to download the predictions
         csv = prediction_results.to_csv(index=False)
         st.download_button(
@@ -215,7 +221,5 @@ if option == "Variable Importance & SHAP Values":
             fig, ax = plt.subplots()
             shap.summary_plot(shap_values[1], X_train, show=False)
             st.pyplot(fig)
-            
-            
         else:
             st.write("Variable importance is not available for the best model (not a tree-based model).")
