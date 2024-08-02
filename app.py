@@ -18,7 +18,7 @@ st.title("Model Evaluation with Randomized Predictions")
 
 # Sidebar for navigation
 st.sidebar.title("Navigation")
-option = st.sidebar.selectbox("Choose a page:", ["Upload Data", "EDA", "Model Evaluation", "Prediction"])
+option = st.sidebar.selectbox("Choose a page:", ["Upload Data", "EDA", "Model Evaluation", "Prediction", "Variable Importance"])
 
 # Function to create pipelines
 def create_pipeline(model):
@@ -168,3 +168,31 @@ if option == "Prediction":
             file_name='predictions.csv',
             mime='text/csv',
         )
+
+# Variable Importance Tab
+if option == "Variable Importance":
+    st.header("Variable Importance")
+    if 'best_pipeline' not in st.session_state:
+        st.write("Please evaluate models in the 'Model Evaluation' tab first.")
+    else:
+        best_model_name = st.session_state['best_model_name']
+        best_pipeline = st.session_state['best_pipeline']
+        if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
+            if best_model_name == 'XGBoost':
+                importance = best_pipeline.named_steps['classifier'].feature_importances_
+            else:
+                importance = best_pipeline.named_steps['classifier'].feature_importances_
+            
+            feature_importance = pd.DataFrame({
+                'Feature': st.session_state['data'].drop(columns=['Anomaly_Label']).columns,
+                'Importance': importance
+            }).sort_values(by='Importance', ascending=False)
+            
+            st.write("Feature Importances:")
+            st.write(feature_importance)
+            
+            fig, ax = plt.subplots()
+            sns.barplot(x='Importance', y='Feature', data=feature_importance, ax=ax)
+            st.pyplot(fig)
+        else:
+            st.write("Variable importance is not available for the best model (not a tree-based model).")
