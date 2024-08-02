@@ -213,12 +213,12 @@ if option == "Variable Importance & SHAP Values":
             
             st.write("SHAP Summary Plot:")
             fig, ax = plt.subplots()
-            shap.summary_plot(shap_values, X_train, show=False)
+            shap.summary_plot(shap_values[1], X_train, show=False)
             st.pyplot(fig)
             
             st.write("SHAP Dependence Plot for the most important feature:")
             fig, ax = plt.subplots()
-            shap.dependence_plot(feature_importance['Feature'].iloc[0], shap_values, X_train, show=False)
+            shap.dependence_plot(feature_importance['Feature'].iloc[0], shap_values[1], X_train, show=False)
             st.pyplot(fig)
         else:
             st.write("Variable importance is not available for the best model (not a tree-based model).")
