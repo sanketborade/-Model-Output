@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import shap
 
-st.title("Predictive Model")
+st.title("Model Evaluation with Randomized Predictions")
 
 # Sidebar for navigation
 st.sidebar.title("Navigation")
@@ -73,6 +73,7 @@ if option == "EDA":
         
         st.write("Correlation Matrix:")
         corr_matrix = data.corr()
+        st.write(corr_matrix)  # Display the correlation matrix values
         fig, ax = plt.subplots()
         sns.heatmap(corr_matrix, annot=True, ax=ax)
         st.pyplot(fig)
@@ -197,7 +198,7 @@ if option == "Variable Importance & SHAP Values":
         best_pipeline = st.session_state['best_pipeline']
         X_train = st.session_state['X_train']
         
-        if best_model_name == 'Decision Tree':
+        if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting']:
             classifier = best_pipeline.named_steps['classifier']
             if hasattr(classifier, 'feature_importances_'):
                 importance = classifier.feature_importances_
