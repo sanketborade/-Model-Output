@@ -198,7 +198,7 @@ if option == "Variable Importance & SHAP Values":
         best_pipeline = st.session_state['best_pipeline']
         X_train = st.session_state['X_train']
         
-        if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting']:
+        if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
             classifier = best_pipeline.named_steps['classifier']
             if hasattr(classifier, 'feature_importances_'):
                 importance = classifier.feature_importances_
@@ -220,7 +220,14 @@ if option == "Variable Importance & SHAP Values":
             
             st.write("SHAP Summary Plot:")
             fig, ax = plt.subplots()
-            shap.summary_plot(shap_values[1], X_train, show=False)
+            shap.summary_plot(shap_values, X_train, show=False)
             st.pyplot(fig)
         else:
-            st.write("Variable importance is not available for the best model (not a tree-based model).")
+            # For non-tree-based models
+            st.write(f"SHAP Summary Plot for {best_model_name}:")
+            explainer = shap.Explainer(best_pipeline.named_steps['classifier'], X_train)
+            shap_values = explainer(X_train)
+            
+            fig, ax = plt.subplots()
+            shap.summary_plot(shap_values, X_train, show=False)
+            st.pyplot(fig)
