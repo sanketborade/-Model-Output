@@ -203,7 +203,7 @@ if option == "Variable Importance & SHAP Values":
         shap_values = explainer(X_train)
         
         fig, ax = plt.subplots()
-        shap.summary_plot(shap_values, X_train, show=False)
+        shap.summary_plot(shap_values, X_train)
         st.pyplot(fig)
         
         if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
