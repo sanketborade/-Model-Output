@@ -45,7 +45,7 @@ if 'X_train' not in st.session_state:
     st.session_state['X_train'] = None
 
 # Tabs for navigation
-tabs = st.tabs(["Upload Data", "EDA", "Model Evaluation", "Prediction", "Variable Importance & SHAP Values"])
+tabs = st.tabs(["Upload Data", "EDA", "Model Evaluation", "Prediction"])
 
 # Upload Data Tab
 with tabs[0]:
@@ -88,7 +88,48 @@ with tabs[1]:
             st.line_chart(data[num_cols])
         else:
             st.write("No numerical features to display.")
-        
+
+        if st.session_state['best_pipeline'] is not None:
+            best_model_name = st.session_state['best_model_name']
+            best_pipeline = st.session_state['best_pipeline']
+            X_train = st.session_state['X_train']
+
+            st.write("Variable Importance & SHAP Values")
+
+            if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
+                classifier = best_pipeline.named_steps['classifier']
+                if hasattr(classifier, 'feature_importances_'):
+                    importance = classifier.feature_importances_
+                    feature_importance = pd.DataFrame({
+                        'Feature': X_train.columns,
+                        'Importance': importance
+                    }).sort_values(by='Importance', ascending=False)
+
+                    st.write("Feature Importances:")
+                    st.write(feature_importance)
+
+                    fig, ax = plt.subplots()
+                    sns.barplot(x='Importance', y='Feature', data=feature_importance, ax=ax)
+                    st.pyplot(fig)
+
+                # SHAP values
+                explainer = shap.TreeExplainer(classifier)
+                shap_values = explainer.shap_values(X_train)
+
+                st.write("SHAP Summary Plot:")
+                fig, ax = plt.subplots()
+                shap.summary_plot(shap_values, X_train, show=False)
+                st.pyplot(fig)
+            else:
+                # For non-tree-based models
+                st.write(f"SHAP Summary Plot for {best_model_name}:")
+                explainer = shap.Explainer(best_pipeline.named_steps['classifier'], X_train)
+                shap_values = explainer(X_train)
+
+                fig, ax = plt.subplots()
+                shap.summary_plot(shap_values, X_train, show=False)
+                st.pyplot(fig)
+
     else:
         st.write("Please upload a CSV file in the 'Upload Data' tab.")
 
@@ -185,47 +226,3 @@ with tabs[3]:
             file_name='predictions.csv',
             mime='text/csv',
         )
-
-# Variable Importance & SHAP Values Tab
-with tabs[4]:
-    st.header("Variable Importance & SHAP Values")
-    if st.session_state['best_pipeline'] is None:
-        st.write("Please evaluate models in the 'Model Evaluation' tab first.")
-    else:
-        best_model_name = st.session_state['best_model_name']
-        best_pipeline = st.session_state['best_pipeline']
-        X_train = st.session_state['X_train']
-        
-        if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
-            classifier = best_pipeline.named_steps['classifier']
-            if hasattr(classifier, 'feature_importances_'):
-                importance = classifier.feature_importances_
-                feature_importance = pd.DataFrame({
-                    'Feature': X_train.columns,
-                    'Importance': importance
-                }).sort_values(by='Importance', ascending=False)
-                
-                st.write("Feature Importances:")
-                st.write(feature_importance)
-                
-                fig, ax = plt.subplots()
-                sns.barplot(x='Importance', y='Feature', data=feature_importance, ax=ax)
-                st.pyplot(fig)
-            
-            # SHAP values
-            explainer = shap.TreeExplainer(classifier)
-            shap_values = explainer.shap_values(X_train)
-            
-            st.write("SHAP Summary Plot:")
-            fig, ax = plt.subplots()
-            shap.summary_plot(shap_values, X_train, show=False)
-            st.pyplot(fig)
-        else:
-            # For non-tree-based models
-            st.write(f"SHAP Summary Plot for {best_model_name}:")
-            explainer = shap.Explainer(best_pipeline.named_steps['classifier'], X_train)
-            shap_values = explainer(X_train)
-            
-            fig, ax = plt.subplots()
-            shap.summary_plot(shap_values, X_train, show=False)
-            st.pyplot(fig)
