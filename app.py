@@ -129,7 +129,6 @@ with tabs[1]:
                 fig, ax = plt.subplots()
                 shap.summary_plot(shap_values, X_train, show=False)
                 st.pyplot(fig)
-
     else:
         st.write("Please upload a CSV file in the 'Upload Data' tab.")
 
