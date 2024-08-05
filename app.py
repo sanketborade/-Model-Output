@@ -76,6 +76,20 @@ with tabs[1]:
         fig, ax = plt.subplots()
         sns.heatmap(corr_matrix, annot=True, ax=ax)
         st.pyplot(fig)
+        
+        st.write("Distribution of Anomaly_Label:")
+        fig, ax = plt.subplots()
+        sns.countplot(x='Anomaly_Label', data=data, ax=ax)
+        st.pyplot(fig)
+        
+        st.write("Histograms of Features:")
+        num_cols = data.select_dtypes(include=np.number).columns
+        for col in num_cols:
+            if col != 'Anomaly_Label':
+                fig, ax = plt.subplots()
+                sns.histplot(data[col], kde=True, ax=ax)
+                ax.set_title(f'Distribution of {col}')
+                st.pyplot(fig)
     else:
         st.write("Please upload a CSV file in the 'Upload Data' tab.")
 
