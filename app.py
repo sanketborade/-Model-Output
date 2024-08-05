@@ -17,10 +17,6 @@ import shap
 
 st.title("Model Evaluation with Randomized Predictions")
 
-# Sidebar for navigation
-st.sidebar.title("Navigation")
-option = st.sidebar.selectbox("Choose a page:", ["Upload Data", "EDA", "Model Evaluation", "Prediction", "Variable Importance & SHAP Values"])
-
 # Function to create pipelines
 def create_pipeline(model):
     return Pipeline([
@@ -48,8 +44,11 @@ if 'best_pipeline' not in st.session_state:
 if 'X_train' not in st.session_state:
     st.session_state['X_train'] = None
 
+# Tabs for navigation
+tabs = st.tabs(["Upload Data", "EDA", "Model Evaluation", "Prediction", "Variable Importance & SHAP Values"])
+
 # Upload Data Tab
-if option == "Upload Data":
+with tabs[0]:
     st.header("Upload Data")
     uploaded_file = st.file_uploader("Upload your scored data CSV file", type="csv")
     if uploaded_file is not None:
@@ -57,11 +56,11 @@ if option == "Upload Data":
         st.session_state['data'] = data
         st.write("Data Preview:")
         st.write(data.head())
-else:
-    st.write("Please upload a CSV file to proceed.")
+    else:
+        st.write("Please upload a CSV file to proceed.")
 
 # EDA Tab
-if option == "EDA":
+with tabs[1]:
     st.header("Exploratory Data Analysis")
     if st.session_state['data'] is not None:
         data = st.session_state['data']
@@ -95,7 +94,7 @@ if option == "EDA":
         st.write("Please upload a CSV file in the 'Upload Data' tab.")
 
 # Model Evaluation Tab
-if option == "Model Evaluation":
+with tabs[2]:
     st.header("Model Evaluation")
     if st.session_state['data'] is not None:
         data = st.session_state['data']
@@ -160,7 +159,7 @@ if option == "Model Evaluation":
         st.write("Please upload a CSV file in the 'Upload Data' tab.")
 
 # Prediction Tab
-if option == "Prediction":
+with tabs[3]:
     st.header("Make Predictions")
     if st.session_state['best_pipeline'] is None:
         st.write("Please evaluate models in the 'Model Evaluation' tab first.")
@@ -189,7 +188,7 @@ if option == "Prediction":
         )
 
 # Variable Importance & SHAP Values Tab
-if option == "Variable Importance & SHAP Values":
+with tabs[4]:
     st.header("Variable Importance & SHAP Values")
     if st.session_state['best_pipeline'] is None:
         st.write("Please evaluate models in the 'Model Evaluation' tab first.")
