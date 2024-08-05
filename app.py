@@ -81,8 +81,14 @@ with tabs[1]:
         fig, ax = plt.subplots()
         sns.countplot(x='Anomaly_Label', data=data, ax=ax)
         st.pyplot(fig)
+
+        st.write("Line Chart of Numerical Features:")
+        num_cols = data.select_dtypes(include=np.number).columns
+        if len(num_cols) > 0:
+            st.line_chart(data[num_cols])
+        else:
+            st.write("No numerical features to display.")
         
-       
     else:
         st.write("Please upload a CSV file in the 'Upload Data' tab.")
 
