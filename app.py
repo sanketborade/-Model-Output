@@ -83,12 +83,12 @@ with tabs[0]:
         else:
             st.write("No numerical features to display.")
         
+        # Variable Importance & SHAP Values
         if st.session_state['best_pipeline'] is not None:
+            st.write("Variable Importance & SHAP Values")
             best_model_name = st.session_state['best_model_name']
             best_pipeline = st.session_state['best_pipeline']
             X_train = st.session_state['X_train']
-
-            st.write("Variable Importance & SHAP Values")
 
             if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
                 classifier = best_pipeline.named_steps['classifier']
@@ -230,4 +230,4 @@ with tabs[2]:
             mime='text/csv',
         )
     else:
-        st.write("Please upload a CSV file for scoring.")
+        st.write("Please upload a a CSV file for scoring.")
