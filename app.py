@@ -44,23 +44,15 @@ if 'best_pipeline' not in st.session_state:
 if 'X_train' not in st.session_state:
     st.session_state['X_train'] = None
 
-# Tabs for navigation
-tabs = st.tabs(["Upload Data", "EDA", "Model Evaluation", "Prediction"])
+# Load the data
+data = pd.read_csv('/mnt/data/anomaly data.csv')  # Path to your data file
+st.session_state['data'] = data
 
-# Upload Data Tab
-with tabs[0]:
-    st.header("Upload Data")
-    uploaded_file = st.file_uploader("Upload your scored data CSV file", type="csv")
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
-        st.session_state['data'] = data
-        st.write("Data Preview:")
-        st.write(data.head())
-    else:
-        st.write("Please upload a CSV file to proceed.")
+# Tabs for navigation
+tabs = st.tabs(["EDA", "Model Evaluation", "Prediction"])
 
 # EDA Tab
-with tabs[1]:
+with tabs[0]:
     st.header("Exploratory Data Analysis")
     if st.session_state['data'] is not None:
         data = st.session_state['data']
@@ -130,10 +122,10 @@ with tabs[1]:
                 shap.summary_plot(shap_values, X_train, show=False)
                 st.pyplot(fig)
     else:
-        st.write("Please upload a CSV file in the 'Upload Data' tab.")
+        st.write("No data available.")
 
 # Model Evaluation Tab
-with tabs[2]:
+with tabs[1]:
     st.header("Model Evaluation")
     if st.session_state['data'] is not None:
         data = st.session_state['data']
@@ -195,10 +187,10 @@ with tabs[2]:
         st.session_state['best_pipeline'].fit(X_train, y_train)
         st.session_state['X_train'] = X_train
     else:
-        st.write("Please upload a CSV file in the 'Upload Data' tab.")
+        st.write("No data available.")
 
 # Prediction Tab
-with tabs[3]:
+with tabs[2]:
     st.header("Make Predictions")
     if st.session_state['best_pipeline'] is None:
         st.write("Please evaluate models in the 'Model Evaluation' tab first.")
