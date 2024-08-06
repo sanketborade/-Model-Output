@@ -177,16 +177,15 @@ with tabs[1]:
     else:
         st.write("No data available.")
 
-# Prediction Tab
+# Scoring Tab
 with tabs[2]:
     st.header("Scoring")
-    if st.session_state['best_pipeline'] is None:
-        st.write("Please evaluate models in the 'Model Evaluation' tab first.")
-    else:
-        data = st.session_state['data'].drop(columns=['Anomaly_Label'])
+    uploaded_file = st.file_uploader("Upload your data CSV file for scoring", type="csv")
+    if uploaded_file is not None and st.session_state['best_pipeline'] is not None:
+        scoring_data = pd.read_csv(uploaded_file)
         
-        predictions = st.session_state['best_pipeline'].predict(data)
-        prediction_results = data.copy()
+        predictions = st.session_state['best_pipeline'].predict(scoring_data)
+        prediction_results = scoring_data.copy()
         prediction_results['Predictions'] = predictions
         st.write("Predictions:")
         st.write(prediction_results)
@@ -205,3 +204,5 @@ with tabs[2]:
             file_name='predictions.csv',
             mime='text/csv',
         )
+    else:
+        st.write("Please upload a CSV file and ensure a model is trained in the 'Modelling' tab.")
