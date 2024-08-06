@@ -116,7 +116,7 @@ with tabs[0]:
 
 # Model Evaluation Tab
 with tabs[1]:
-    st.header("Model Evaluation")
+    st.header("Modelling")
     if data is not None:
         # Preprocess data
         data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
@@ -179,7 +179,7 @@ with tabs[1]:
 
 # Prediction Tab
 with tabs[2]:
-    st.header("Make Predictions")
+    st.header("Scoring")
     if st.session_state['best_pipeline'] is None:
         st.write("Please evaluate models in the 'Model Evaluation' tab first.")
     else:
