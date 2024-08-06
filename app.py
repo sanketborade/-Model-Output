@@ -47,7 +47,7 @@ if 'X_train' not in st.session_state:
     st.session_state['X_train'] = None
 
 # Tabs for navigation
-tabs = st.tabs(["EDA", "Model Evaluation", "Prediction"])
+tabs = st.tabs(["EDA", "Modelling", "Scoring"])
 
 # EDA Tab
 with tabs[0]:
