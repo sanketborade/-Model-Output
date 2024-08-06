@@ -194,6 +194,9 @@ with tabs[2]:
             st.session_state['best_pipeline'] = decision_tree_pipeline
             st.session_state['best_model_name'] = 'Decision Tree'
 
+        # Align columns of scoring data to match training data
+        scoring_data = scoring_data[X.columns]
+
         predictions = st.session_state['best_pipeline'].predict(scoring_data)
         prediction_results = scoring_data.copy()
         prediction_results['Predictions'] = predictions
