@@ -34,9 +34,11 @@ def find_best_model(results):
             best_model_name = model_name
     return best_model_name, best_accuracy, results[best_model_name]
 
+# Load the data
+data = pd.read_csv('anomaly_1.csv')  # Path to your data file
+st.session_state['data'] = data
+
 # Initialize session state variables
-if 'data' not in st.session_state:
-    st.session_state['data'] = None
 if 'best_model_name' not in st.session_state:
     st.session_state['best_model_name'] = None
 if 'best_pipeline' not in st.session_state:
@@ -44,18 +46,13 @@ if 'best_pipeline' not in st.session_state:
 if 'X_train' not in st.session_state:
     st.session_state['X_train'] = None
 
-# Load the data
-data = pd.read_csv('/mnt/data/anomaly data.csv')  # Path to your data file
-st.session_state['data'] = data
-
 # Tabs for navigation
 tabs = st.tabs(["EDA", "Model Evaluation", "Prediction"])
 
 # EDA Tab
 with tabs[0]:
     st.header("Exploratory Data Analysis")
-    if st.session_state['data'] is not None:
-        data = st.session_state['data']
+    if data is not None:
         st.write("Data Preview:")
         st.write(data.head())
         
@@ -127,9 +124,7 @@ with tabs[0]:
 # Model Evaluation Tab
 with tabs[1]:
     st.header("Model Evaluation")
-    if st.session_state['data'] is not None:
-        data = st.session_state['data']
-        
+    if data is not None:
         # Preprocess data
         data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
         X = data.drop(columns=['Anomaly_Label'])
