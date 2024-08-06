@@ -11,7 +11,7 @@ from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, classification_report
 
 # Load the scored data
-data = pd.read_csv('anomaly data.csv')
+data = pd.read_csv('anomaly_1.csv')
 
 # Convert Anomaly_Label from -1 and 1 to 0 and 1
 data['Anomaly_Label'] = data['Anomaly_Label'].replace({-1: 0, 1: 1})
