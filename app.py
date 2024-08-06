@@ -76,19 +76,12 @@ with tabs[0]:
         for label, percentage in anomaly_counts.items():
             st.write(f"Percentage of {label}: {percentage:.2f}%")
         
-        st.write("Line Chart of Numerical Features:")
-        num_cols = data.select_dtypes(include=np.number).columns
-        if len(num_cols) > 0:
-            st.line_chart(data[num_cols])
-        else:
-            st.write("No numerical features to display.")
-        
+        # Variable Importance & SHAP Values
         if st.session_state['best_pipeline'] is not None:
+            st.write("Variable Importance & SHAP Values")
             best_model_name = st.session_state['best_model_name']
             best_pipeline = st.session_state['best_pipeline']
             X_train = st.session_state['X_train']
-
-            st.write("Variable Importance & SHAP Values")
 
             if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
                 classifier = best_pipeline.named_steps['classifier']
@@ -125,8 +118,13 @@ with tabs[0]:
                 st.pyplot(fig)
         else:
             st.write("Train a model in the 'Modelling' tab to see Variable Importance & SHAP values.")
-    else:
-        st.write("No data available.")
+        
+        st.write("Line Chart of Numerical Features:")
+        num_cols = data.select_dtypes(include=np.number).columns
+        if len(num_cols) > 0:
+            st.line_chart(data[num_cols])
+        else:
+            st.write("No numerical features to display.")
 
 # Model Evaluation Tab
 with tabs[1]:
