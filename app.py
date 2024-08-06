@@ -181,9 +181,19 @@ with tabs[1]:
 with tabs[2]:
     st.header("Scoring")
     uploaded_file = st.file_uploader("Upload your data CSV file for scoring", type="csv")
-    if uploaded_file is not None and st.session_state['best_pipeline'] is not None:
+    if uploaded_file is not None:
         scoring_data = pd.read_csv(uploaded_file)
-        
+
+        # Ensure we always use the Decision Tree model for scoring
+        if 'best_pipeline' not in st.session_state or st.session_state['best_model_name'] != 'Decision Tree':
+            decision_tree_pipeline = create_pipeline(DecisionTreeClassifier())
+            X = st.session_state['data'].drop(columns=['Anomaly_Label'])
+            y = st.session_state['data']['Anomaly_Label'].replace({-1: 0, 1: 1})
+            X_train, _, y_train, _ = train_test_split(X, y, test_size=0.3, random_state=42)
+            decision_tree_pipeline.fit(X_train, y_train)
+            st.session_state['best_pipeline'] = decision_tree_pipeline
+            st.session_state['best_model_name'] = 'Decision Tree'
+
         predictions = st.session_state['best_pipeline'].predict(scoring_data)
         prediction_results = scoring_data.copy()
         prediction_results['Predictions'] = predictions
@@ -205,4 +215,4 @@ with tabs[2]:
             mime='text/csv',
         )
     else:
-        st.write("Please upload a CSV file and ensure a model is trained in the 'Modelling' tab.")
+        st.write("Please upload a CSV file for scoring.")
