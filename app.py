@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import shap
 
-st.title("Predictive Model")
+st.title("Model Evaluation with Randomized Predictions")
 
 # Function to create pipelines
 def create_pipeline(model):
