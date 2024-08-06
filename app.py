@@ -45,6 +45,10 @@ if 'best_pipeline' not in st.session_state:
     st.session_state['best_pipeline'] = None
 if 'X_train' not in st.session_state:
     st.session_state['X_train'] = None
+if 'feature_importance' not in st.session_state:
+    st.session_state['feature_importance'] = None
+if 'shap_values' not in st.session_state:
+    st.session_state['shap_values'] = None
 
 # Tabs for navigation
 tabs = st.tabs(["EDA", "Modelling", "Scoring"])
@@ -76,48 +80,20 @@ with tabs[0]:
         for label, percentage in anomaly_counts.items():
             st.write(f"Percentage of {label}: {percentage:.2f}%")
         
-        # Variable Importance & SHAP Values
-        if st.session_state['best_pipeline'] is not None:
-            st.write("Variable Importance & SHAP Values")
-            best_model_name = st.session_state['best_model_name']
-            best_pipeline = st.session_state['best_pipeline']
-            X_train = st.session_state['X_train']
+        # Display Variable Importance and SHAP Values if available
+        if st.session_state['feature_importance'] is not None:
+            st.write("Variable Importance:")
+            st.write(st.session_state['feature_importance'])
 
-            if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
-                classifier = best_pipeline.named_steps['classifier']
-                if hasattr(classifier, 'feature_importances_'):
-                    importance = classifier.feature_importances_
-                    feature_importance = pd.DataFrame({
-                        'Feature': X_train.columns,
-                        'Importance': importance
-                    }).sort_values(by='Importance', ascending=False)
-
-                    st.write("Feature Importances:")
-                    st.write(feature_importance)
-
-                    fig, ax = plt.subplots()
-                    sns.barplot(x='Importance', y='Feature', data=feature_importance, ax=ax)
-                    st.pyplot(fig)
-
-                # SHAP values
-                explainer = shap.TreeExplainer(classifier)
-                shap_values = explainer.shap_values(X_train)
-
-                st.write("SHAP Summary Plot:")
-                fig, ax = plt.subplots()
-                shap.summary_plot(shap_values, X_train, show=False)
-                st.pyplot(fig)
-            else:
-                # For non-tree-based models
-                st.write(f"SHAP Summary Plot for {best_model_name}:")
-                explainer = shap.Explainer(best_pipeline.named_steps['classifier'], X_train)
-                shap_values = explainer(X_train)
-
-                fig, ax = plt.subplots()
-                shap.summary_plot(shap_values, X_train, show=False)
-                st.pyplot(fig)
-        else:
-            st.write("Train a model in the 'Modelling' tab to see Variable Importance & SHAP values.")
+            fig, ax = plt.subplots()
+            sns.barplot(x='Importance', y='Feature', data=st.session_state['feature_importance'], ax=ax)
+            st.pyplot(fig)
+        
+        if st.session_state['shap_values'] is not None:
+            st.write("SHAP Summary Plot:")
+            fig, ax = plt.subplots()
+            shap.summary_plot(st.session_state['shap_values'], st.session_state['X_train'], show=False)
+            st.pyplot(fig)
         
         st.write("Line Chart of Numerical Features:")
         num_cols = data.select_dtypes(include=np.number).columns
@@ -186,6 +162,26 @@ with tabs[1]:
         st.session_state['best_pipeline'] = create_pipeline(models[best_model_name])
         st.session_state['best_pipeline'].fit(X_train, y_train)
         st.session_state['X_train'] = X_train
+        
+        # Calculate and store feature importance and SHAP values
+        if best_model_name in ['Decision Tree', 'Random Forest', 'Gradient Boosting', 'XGBoost']:
+            classifier = st.session_state['best_pipeline'].named_steps['classifier']
+            if hasattr(classifier, 'feature_importances_'):
+                importance = classifier.feature_importances_
+                feature_importance = pd.DataFrame({
+                    'Feature': X_train.columns,
+                    'Importance': importance
+                }).sort_values(by='Importance', ascending=False)
+                st.session_state['feature_importance'] = feature_importance
+            
+            explainer = shap.TreeExplainer(classifier)
+            shap_values = explainer.shap_values(X_train)
+            st.session_state['shap_values'] = shap_values
+        else:
+            classifier = st.session_state['best_pipeline'].named_steps['classifier']
+            explainer = shap.Explainer(classifier, X_train)
+            shap_values = explainer(X_train)
+            st.session_state['shap_values'] = shap_values
     else:
         st.write("No data available.")
 
@@ -219,15 +215,4 @@ with tabs[2]:
         normal_count = (predictions == 0).sum()
         anomaly_count = (predictions == 1).sum()
         st.write(f"Normal Points: {normal_count}")
-        st.write(f"Anomaly Points: {anomaly_count}")
-        
-        # Allow users to download the predictions
-        csv = prediction_results.to_csv(index=False)
-        st.download_button(
-            label="Download Predictions as CSV",
-            data=csv,
-            file_name='predictions.csv',
-            mime='text/csv',
-        )
-    else:
-        st.write("Please upload a CSV file for scoring.")
+        st.write(f"Anomaly Points: {anomaly
