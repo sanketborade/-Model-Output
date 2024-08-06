@@ -71,6 +71,11 @@ with tabs[0]:
         sns.countplot(x='Anomaly_Label', data=data, ax=ax)
         st.pyplot(fig)
         
+        # Calculate and display percentages
+        anomaly_counts = data['Anomaly_Label'].value_counts(normalize=True) * 100
+        for label, percentage in anomaly_counts.items():
+            st.write(f"Percentage of {label}: {percentage:.2f}%")
+        
         if st.session_state['best_pipeline'] is not None:
             best_model_name = st.session_state['best_model_name']
             best_pipeline = st.session_state['best_pipeline']
