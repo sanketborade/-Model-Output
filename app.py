@@ -76,6 +76,13 @@ with tabs[0]:
         for label, percentage in anomaly_counts.items():
             st.write(f"Percentage of {label}: {percentage:.2f}%")
         
+        st.write("Line Chart of Numerical Features:")
+        num_cols = data.select_dtypes(include=np.number).columns
+        if len(num_cols) > 0:
+            st.line_chart(data[num_cols])
+        else:
+            st.write("No numerical features to display.")
+        
         if st.session_state['best_pipeline'] is not None:
             best_model_name = st.session_state['best_model_name']
             best_pipeline = st.session_state['best_pipeline']
