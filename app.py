@@ -215,4 +215,4 @@ with tabs[2]:
         normal_count = (predictions == 0).sum()
         anomaly_count = (predictions == 1).sum()
         st.write(f"Normal Points: {normal_count}")
-        st.write(f"Anomaly Points: {anomaly
+        st.write(f"Anomaly Points: {anomaly_count}")
