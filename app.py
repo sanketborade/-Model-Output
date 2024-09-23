@@ -79,21 +79,6 @@ with tabs[0]:
         anomaly_counts = data['Anomaly_Label'].value_counts(normalize=True) * 100
         for label, percentage in anomaly_counts.items():
             st.write(f"Percentage of {label}: {percentage:.2f}%")
-        
-        # Display Variable Importance and SHAP Values if available
-        if st.session_state['feature_importance'] is not None:
-            st.write("Variable Importance:")
-            st.write(st.session_state['feature_importance'])
-
-            fig, ax = plt.subplots()
-            sns.barplot(x='Importance', y='Feature', data=st.session_state['feature_importance'], ax=ax)
-            st.pyplot(fig)
-        
-        if st.session_state['shap_values'] is not None:
-            st.write("SHAP Summary Plot:")
-            fig, ax = plt.subplots()
-            shap.summary_plot(st.session_state['shap_values'], st.session_state['X_train'], show=False)
-            st.pyplot(fig)
 
 # Model Evaluation Tab
 with tabs[1]:
