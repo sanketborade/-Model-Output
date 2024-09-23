@@ -94,13 +94,6 @@ with tabs[0]:
             fig, ax = plt.subplots()
             shap.summary_plot(st.session_state['shap_values'], st.session_state['X_train'], show=False)
             st.pyplot(fig)
-        
-        st.write("Line Chart of Numerical Features:")
-        num_cols = data.select_dtypes(include=np.number).columns
-        if len(num_cols) > 0:
-            st.line_chart(data[num_cols])
-        else:
-            st.write("No numerical features to display.")
 
 # Model Evaluation Tab
 with tabs[1]:
